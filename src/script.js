@@ -1,3 +1,10 @@
+// Function to navigate from the home screen to a specific tab
+function navigateTo(tabId) {
+    document.getElementById('homeScreen').style.display = 'none';
+    document.getElementById('tabsNav').style.display = 'flex';
+    showTab(tabId);
+}
+
 // Show the selected tab and hide the others
 function showTab(tabId) {
     document.getElementById('generatorTab').style.display = tabId === 'generatorTab' ? 'block' : 'none';
@@ -27,7 +34,7 @@ function generateWorkout() {
     fetchWorkoutData(muscle, difficulty, equipment);
 }
 
-// Fetch workout data (existing function)
+// Fetch workout data
 function fetchWorkoutData(muscle, difficulty, equipment) {
     const apiUrl = `https://api.api-ninjas.com/v1/exercises?muscle=${muscle}`;
 
@@ -53,7 +60,7 @@ function fetchWorkoutData(muscle, difficulty, equipment) {
         });
 }
 
-// Display workouts and save selected ones (existing function)
+// Display workouts and save selected ones
 function displayWorkoutData(data, difficultyFilter, equipmentFilter) {
     document.getElementById('resultContent').innerHTML = '';
     const filteredData = data.filter(exercise =>
@@ -81,7 +88,7 @@ function displayWorkoutData(data, difficultyFilter, equipmentFilter) {
     window.exercisesData = filteredData;
 }
 
-// Save selected workouts to "Saved Workouts" tab (existing function)
+// Save selected workouts to "Saved Workouts" tab
 function saveSelectedWorkouts() {
     const selectedExercises = [];
     document.querySelectorAll('.exercise-checkbox:checked').forEach(checkbox => {

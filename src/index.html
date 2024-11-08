@@ -8,14 +8,25 @@
     <script src="script.js" defer></script>
 </head>
 <body>
-<div class="tabs">
-    <button onclick="showTab('generatorTab')">Workout Generator</button>
-    <button onclick="showTab('savedTab')">Saved Workouts</button>
-    <button onclick="showTab('logTab')">Workout Log</button>
+<!-- Tabs Navigation at the Top -->
+<div class="tabs" id="tabsNav" style="display: none;">
+    <button onclick="showTab('generatorTab')" class="tab-button">Workout Generator</button>
+    <button onclick="showTab('savedTab')" class="tab-button">Saved Workouts</button>
+    <button onclick="showTab('logTab')" class="tab-button">Workout Log</button>
+</div>
+
+<!-- Home Screen -->
+<div id="homeScreen" class="tab-content active">
+    <h1>Welcome to Custom Gym Routine</h1>
+    <p>Select an option to get started:</p>
+    <div class="home-buttons">
+        <button onclick="navigateTo('generatorTab')">Workout</button>
+        <button onclick="alert('Nutrition feature coming soon!')">Nutrition</button>
+    </div>
 </div>
 
 <!-- Workout Generator Tab -->
-<div id="generatorTab" class="tab-content">
+<div id="generatorTab" class="tab-content" style="display: none;">
     <h1>Create Your Custom Gym Routine</h1>
     <div class="input-section">
         <label for="muscle">Muscle Group:</label>
@@ -27,7 +38,11 @@
         <label for="equipment">Equipment:</label>
         <input type="text" id="equipment" placeholder="e.g., Dumbbell">
 
-        <button onclick="generateWorkout()">Generate Workout</button>
+        <!-- Buttons Grouped Together -->
+        <div class="button-group">
+            <button onclick="generateWorkout()">Generate Workout</button>
+            <button onclick="saveSelectedWorkouts()">Save Workouts</button>
+        </div>
     </div>
 
     <!-- Summary Section -->
@@ -42,7 +57,6 @@
     <div class="result-section" id="resultSection">
         <h2>Available Workouts</h2>
         <p id="resultContent">Your generated workout details will appear here.</p>
-        <button onclick="saveSelectedWorkouts()">Save Selected Workouts</button>
     </div>
 </div>
 
