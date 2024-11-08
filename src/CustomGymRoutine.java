@@ -57,7 +57,7 @@ public class CustomGymRoutine {
             URL url = new URL("https://api.api-ninjas.com/v1/exercises?muscle=" + muscle);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("accept", "application/json");
-            connection.setRequestProperty("X-Api-Key", "ViDZePNbkVmheKpy62fxYQ==xIjZAovy9dXD0DR5"); // Replace with your actual API key
+            connection.setRequestProperty("X-Api-Key", "ViDZePNbkVmheKpy62fxYQ==xIjZAovy9dXD0DR5");
 
             InputStream responseStream = connection.getInputStream();
             ObjectMapper mapper = new ObjectMapper();

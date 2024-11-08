@@ -1,0 +1,45 @@
+/* Basic Styling for Tabs */
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tabs button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.tabs button:hover {
+    background-color: #0056b3;
+}
+
+.tab-content {
+    display: none; /* Hide content by default */
+}
+
+.tab-content.active {
+    display: block; /* Show active content */
+}
+
+/* Style for Log Inputs */
+.log-entry {
+    margin-bottom: 10px;
+}
+
+.log-entry label {
+    display: inline-block;
+    width: 80px;
+}
+
+.log-entry input[type="number"] {
+    width: 60px;
+    padding: 5px;
+    margin-right: 10px;
+}

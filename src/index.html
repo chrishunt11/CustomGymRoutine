@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Gym Routine</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+<div class="tabs">
+    <button onclick="showTab('generatorTab')">Workout Generator</button>
+    <button onclick="showTab('savedTab')">Saved Workouts</button>
+    <button onclick="showTab('logTab')">Workout Log</button>
+</div>
+
+<!-- Workout Generator Tab -->
+<div id="generatorTab" class="tab-content">
+    <h1>Create Your Custom Gym Routine</h1>
+    <div class="input-section">
+        <label for="muscle">Muscle Group:</label>
+        <input type="text" id="muscle" placeholder="e.g., Chest">
+
+        <label for="difficulty">Difficulty:</label>
+        <input type="text" id="difficulty" placeholder="e.g., Beginner">
+
+        <label for="equipment">Equipment:</label>
+        <input type="text" id="equipment" placeholder="e.g., Dumbbell">
+
+        <button onclick="generateWorkout()">Generate Workout</button>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <h2>Workout Summary</h2>
+        <p><strong>Muscle Group:</strong> <span id="muscleSummary">-</span></p>
+        <p><strong>Difficulty:</strong> <span id="difficultySummary">-</span></p>
+        <p><strong>Equipment:</strong> <span id="equipmentSummary">-</span></p>
+    </div>
+
+    <!-- Result Section -->
+    <div class="result-section" id="resultSection">
+        <h2>Available Workouts</h2>
+        <p id="resultContent">Your generated workout details will appear here.</p>
+        <button onclick="saveSelectedWorkouts()">Save Selected Workouts</button>
+    </div>
+</div>
+
+<!-- Saved Workouts Tab -->
+<div id="savedTab" class="tab-content" style="display: none;">
+    <h1>Saved Workouts</h1>
+    <div id="savedContent">No workouts saved yet.</div>
+    <button onclick="showTab('generatorTab')">Back to Workout Generator</button>
+</div>
+
+<!-- Workout Log Tab -->
+<div id="logTab" class="tab-content" style="display: none;">
+    <h1>Workout Log</h1>
+    <div id="logContent">No workouts added to log yet.</div>
+    <button onclick="showTab('savedTab')">Back to Saved Workouts</button>
+</div>
+</body>
+</html>
