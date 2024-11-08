@@ -34,7 +34,7 @@ function generateWorkout() {
     fetchWorkoutData(muscle, difficulty, equipment);
 }
 
-// Fetch workout data
+// Fetch workout data (existing function)
 function fetchWorkoutData(muscle, difficulty, equipment) {
     const apiUrl = `https://api.api-ninjas.com/v1/exercises?muscle=${muscle}`;
 
@@ -79,6 +79,7 @@ function displayWorkoutData(data, difficultyFilter, equipmentFilter) {
                     <strong>Muscle:</strong> ${exercise.muscle}<br>
                     <strong>Equipment:</strong> ${exercise.equipment}<br>
                     <strong>Difficulty:</strong> ${exercise.difficulty}<br>
+                    <strong>Instructions:</strong> ${exercise.instructions}<br>
                 </label>
             </div><br>
         `;
@@ -117,6 +118,7 @@ function updateSavedContent() {
                 <strong>Muscle:</strong> ${exercise.muscle}<br>
                 <strong>Equipment:</strong> ${exercise.equipment}<br>
                 <strong>Difficulty:</strong> ${exercise.difficulty}<br>
+                <strong>Instructions:</strong> ${exercise.instructions}<br>
             </div><br>
         `;
     });
@@ -124,7 +126,7 @@ function updateSavedContent() {
     document.getElementById('savedContent').innerHTML = savedContent;
 }
 
-// Display workout log with sets, reps, and weight inputs
+// Display workout log with structured input fields
 function updateLogContent() {
     if (savedWorkouts.length === 0) {
         document.getElementById('logContent').innerHTML = 'No workouts added to log yet.';
@@ -135,7 +137,7 @@ function updateLogContent() {
     savedWorkouts.forEach((exercise, index) => {
         logContent += `
             <div class="log-entry">
-                <strong>${exercise.name}</strong><br>
+                <h3>${exercise.name}</h3>
                 <label>Sets:</label>
                 <input type="number" id="sets-${index}" placeholder="0">
                 <label>Reps:</label>

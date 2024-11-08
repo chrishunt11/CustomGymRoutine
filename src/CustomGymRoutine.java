@@ -14,7 +14,7 @@ public class CustomGymRoutine {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter muscle group (e.g., biceps, triceps, back): ");
         String muscle = scanner.nextLine().trim();
-        System.out.println("Enter difficulty (beginner, intermediate, expert): "); // Updated option
+        System.out.println("Enter difficulty (beginner, intermediate, expert): ");
         String difficulty = scanner.nextLine().trim();
         System.out.println("Enter equipment (e.g., dumbbell, barbell, machine): ");
         String equipment = scanner.nextLine().trim();
@@ -81,7 +81,8 @@ public class CustomGymRoutine {
                     if (type.equalsIgnoreCase("strength")) {
                         exactMatches.add(new StrengthExercise(name, muscleGroup, equipmentRequired, difficultyLevel, instructions, 3, 12));
                     } else if (type.equalsIgnoreCase("cardio")) {
-                        exactMatches.add(new CardioExercise(name, muscleGroup, equipmentRequired, difficultyLevel, instructions, 30, "moderate"));
+                        // Updated to pass exactly six parameters
+                        exactMatches.add(new CardioExercise(name, muscleGroup, equipmentRequired, difficultyLevel, 30, "moderate"));
                     } else {
                         exactMatches.add(new Exercise(name, type, muscleGroup, equipmentRequired, difficultyLevel, instructions));
                     }
