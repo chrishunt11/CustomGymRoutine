@@ -5,138 +5,193 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class CustomGymRoutineApp extends JFrame {
 
     private JTabbedPane tabbedPane;
-    private JPanel workoutGeneratorPanel, savedWorkoutsPanel, workoutLogPanel;
-    private JTextField muscleField, difficultyField, equipmentField;
-    private JTextArea resultArea, savedWorkoutsArea, logArea;
-    private List<String> generatedWorkouts;  // Add this line
-    private List<String> savedWorkouts;
+    private JPanel workoutGeneratorPanel, savedWorkoutsPanel, loggedWorkoutsPanel;
+    private JComboBox<String> muscleComboBox, difficultyComboBox, typeComboBox;
+    private JTextField workoutNameField;
+    private JPanel resultPanel, exerciseInputPanel;
+    private JTextArea workoutDetailsArea;
+    private List<JCheckBox> workoutCheckBoxes;
+    private List<JCheckBox> selectedWorkoutCheckBoxes;
+    private Map<String, List<Map<String, String>>> savedWorkoutGroups;
+    private Map<String, List<String>> loggedWorkouts;
+    private JList<String> savedWorkoutList, loggedWorkoutList;
+    private String selectedWorkoutName;
+    private List<ExerciseInput> exerciseInputs;
 
     public CustomGymRoutineApp() {
         setTitle("Custom Gym Routine");
-        setSize(700, 500);
+        setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        generatedWorkouts = new ArrayList<>();  // Initialize generatedWorkouts
-        savedWorkouts = new ArrayList<>();
+        // Initialize lists and maps for workouts
+        workoutCheckBoxes = new ArrayList<>();
+        selectedWorkoutCheckBoxes = new ArrayList<>();
+        savedWorkoutGroups = new LinkedHashMap<>();
+        loggedWorkouts = new LinkedHashMap<>();
 
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
+        // Create each panel (tab) and add to the tabbed pane
         workoutGeneratorPanel = createWorkoutGeneratorPanel();
         savedWorkoutsPanel = createSavedWorkoutsPanel();
-        workoutLogPanel = createWorkoutLogPanel();
+        loggedWorkoutsPanel = createLoggedWorkoutsPanel();
 
         tabbedPane.addTab("Workout Generator", workoutGeneratorPanel);
         tabbedPane.addTab("Saved Workouts", savedWorkoutsPanel);
-        tabbedPane.addTab("Workout Log", workoutLogPanel);
+        tabbedPane.addTab("Logged Workouts", loggedWorkoutsPanel);
 
         add(tabbedPane);
         setVisible(true);
     }
 
+    // Panel to generate workouts by choosing options
     private JPanel createWorkoutGeneratorPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-        // Input Panel
-        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        // Input section to pick workout details
+        JPanel inputPanel = new JPanel(new GridLayout(5, 2, 10, 10));
         inputPanel.setBorder(BorderFactory.createTitledBorder("Enter Workout Details"));
-        muscleField = new JTextField();
-        difficultyField = new JTextField();
-        equipmentField = new JTextField();
 
-        inputPanel.add(new JLabel("Muscle Group:", JLabel.RIGHT));
-        inputPanel.add(muscleField);
-        inputPanel.add(new JLabel("Difficulty:", JLabel.RIGHT));
-        inputPanel.add(difficultyField);
-        inputPanel.add(new JLabel("Equipment:", JLabel.RIGHT));
-        inputPanel.add(equipmentField);
+        // Dropdowns for selecting workout options
+        typeComboBox = new JComboBox<>(new String[]{"", "cardio", "olympic_weightlifting", "plyometrics", "powerlifting", "strength", "stretching", "strongman"});
+        muscleComboBox = new JComboBox<>(new String[]{"", "abdominals", "abductors", "adductors", "biceps", "calves", "chest", "forearms", "glutes", "hamstrings", "lats", "lower_back", "middle_back", "neck", "quadriceps", "traps", "triceps"});
+        difficultyComboBox = new JComboBox<>(new String[]{"", "beginner", "intermediate", "expert"});
+        workoutNameField = new JTextField();
 
-        // Button Panel
+        // Add labels and input fields to the panel
+        inputPanel.add(createLabel("Exercise Type:"));
+        inputPanel.add(typeComboBox);
+        inputPanel.add(createLabel("Muscle Group:"));
+        inputPanel.add(muscleComboBox);
+        inputPanel.add(createLabel("Difficulty:"));
+        inputPanel.add(difficultyComboBox);
+        inputPanel.add(createLabel("Workout Name:"));
+        inputPanel.add(workoutNameField);
+
+        // Buttons to generate and save workouts
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton generateButton = new JButton("Generate Workout");
-        JButton saveButton = new JButton("Save Selected Workouts");
+        JButton generateButton = createButton("Generate Workout");
+        JButton saveButton = createButton("Save Selected as Custom Workout");
 
         generateButton.addActionListener(e -> fetchWorkoutData());
-        saveButton.addActionListener(e -> saveSelectedWorkouts());
+        saveButton.addActionListener(e -> saveCustomWorkout());
 
         buttonPanel.add(generateButton);
         buttonPanel.add(saveButton);
 
-        // Result Area
-        resultArea = new JTextArea(10, 40);
-        resultArea.setFont(new Font("Serif", Font.PLAIN, 14));
-        resultArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(resultArea);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Generated Workouts"));
+        // Panel to show the generated workouts
+        resultPanel = new JPanel();
+        resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
+        JScrollPane resultScrollPane = new JScrollPane(resultPanel);
+        resultScrollPane.setBorder(BorderFactory.createTitledBorder("Generated Workouts"));
 
-        panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(buttonPanel, BorderLayout.CENTER);
-        panel.add(scrollPane, BorderLayout.SOUTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(inputPanel, BorderLayout.NORTH);
+        topPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(resultScrollPane, BorderLayout.CENTER);
 
         return panel;
     }
 
+    // Panel to manage saved workouts
     private JPanel createSavedWorkoutsPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        savedWorkoutsArea = new JTextArea(15, 40);
-        savedWorkoutsArea.setFont(new Font("Serif", Font.PLAIN, 14));
-        savedWorkoutsArea.setEditable(false);
 
-        JScrollPane scrollPane = new JScrollPane(savedWorkoutsArea);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Saved Workouts"));
+        savedWorkoutList = new JList<>();
+        savedWorkoutList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        savedWorkoutList.addListSelectionListener(e -> displayWorkoutExercises());
 
-        JButton backButton = new JButton("Back to Workout Generator");
-        backButton.addActionListener(e -> tabbedPane.setSelectedIndex(0));
+        JScrollPane listScrollPane = new JScrollPane(savedWorkoutList);
+        listScrollPane.setBorder(BorderFactory.createTitledBorder("Saved Custom Workouts"));
+        listScrollPane.setPreferredSize(new Dimension(250, 0));
 
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(backButton, BorderLayout.SOUTH);
+        exerciseInputPanel = new JPanel();
+        exerciseInputPanel.setLayout(new BoxLayout(exerciseInputPanel, BoxLayout.Y_AXIS));
+        JScrollPane exerciseInputScrollPane = new JScrollPane(exerciseInputPanel);
+        exerciseInputScrollPane.setBorder(BorderFactory.createTitledBorder("Exercise Details"));
 
-        return panel;
-    }
-
-    private JPanel createWorkoutLogPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        logArea = new JTextArea(15, 40);
-        logArea.setFont(new Font("Serif", Font.PLAIN, 14));
-        logArea.setEditable(false);
-
-        JScrollPane scrollPane = new JScrollPane(logArea);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Workout Log"));
-
-        JButton logWorkoutButton = new JButton("Log Workout Details");
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton logWorkoutButton = createButton("Log Workout");
         logWorkoutButton.addActionListener(e -> logWorkoutDetails());
+        buttonPanel.add(logWorkoutButton);
 
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(logWorkoutButton, BorderLayout.SOUTH);
+        panel.add(listScrollPane, BorderLayout.WEST);
+        panel.add(exerciseInputScrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
     }
 
-    private void fetchWorkoutData() {
-        String muscle = muscleField.getText().trim();
-        String difficulty = difficultyField.getText().trim();
-        String equipment = equipmentField.getText().trim();
+    // Panel to view logged workouts
+    private JPanel createLoggedWorkoutsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-        if (muscle.isEmpty() || difficulty.isEmpty() || equipment.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Input Error", JOptionPane.WARNING_MESSAGE);
-            return;
+        loggedWorkoutList = new JList<>();
+        loggedWorkoutList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        loggedWorkoutList.addListSelectionListener(e -> displayLoggedWorkoutDetails(loggedWorkoutList.getSelectedValue()));
+
+        // Adjust the preferred size of the scroll pane to increase the list's width
+        JScrollPane listScrollPane = new JScrollPane(loggedWorkoutList);
+        listScrollPane.setBorder(BorderFactory.createTitledBorder("Logged Workouts"));
+        listScrollPane.setPreferredSize(new Dimension(300, 0)); // Increase the width here (e.g., 300 pixels)
+
+        workoutDetailsArea = new JTextArea(15, 30);
+        workoutDetailsArea.setEditable(false);
+        JScrollPane detailsScrollPane = new JScrollPane(workoutDetailsArea);
+        detailsScrollPane.setBorder(BorderFactory.createTitledBorder("Workout Details"));
+
+        updateLoggedWorkoutList();
+
+        panel.add(listScrollPane, BorderLayout.WEST);       // Left: Logged workout names
+        panel.add(detailsScrollPane, BorderLayout.CENTER);  // Right: Selected workout details
+
+        return panel;
+    }
+
+    // Fetch data from API based on selected options, with flexibility for optional fields
+    private void fetchWorkoutData() {
+        String type = (String) typeComboBox.getSelectedItem();
+        String muscle = (String) muscleComboBox.getSelectedItem();
+        String difficulty = (String) difficultyComboBox.getSelectedItem();
+
+        // Build the URL with only selected fields
+        StringBuilder apiUrl = new StringBuilder("https://api.api-ninjas.com/v1/exercises?");
+
+        if (type != null && !type.isEmpty()) {
+            apiUrl.append("type=").append(type).append("&");
+        }
+        if (muscle != null && !muscle.isEmpty()) {
+            apiUrl.append("muscle=").append(muscle).append("&");
+        }
+        if (difficulty != null && !difficulty.isEmpty()) {
+            apiUrl.append("difficulty=").append(difficulty).append("&");
+        }
+
+        // Remove trailing '&' if present
+        if (apiUrl.charAt(apiUrl.length() - 1) == '&') {
+            apiUrl.setLength(apiUrl.length() - 1);
         }
 
         try {
-            // Prepare API URL and Connection
-            String apiUrl = "https://api.api-ninjas.com/v1/exercises?muscle=" + muscle;
-            URL url = new URL(apiUrl);
+            URL url = new URL(apiUrl.toString());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setRequestProperty("X-Api-Key", "YOUR_API_KEY");
+            connection.setRequestProperty("X-Api-Key", "ViDZePNbkVmheKpy62fxYQ==xIjZAovy9dXD0DR5");
 
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String inputLine;
@@ -148,70 +203,223 @@ public class CustomGymRoutineApp extends JFrame {
             in.close();
             connection.disconnect();
 
-            // Parse JSON response
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(content.toString());
 
-            resultArea.setText(""); // Clear previous results
-            generatedWorkouts.clear();
+            resultPanel.removeAll();
+            workoutCheckBoxes.clear();
 
+            // Iterate through each exercise in the response
             for (JsonNode node : root) {
                 String name = node.get("name").asText();
-                String type = node.get("type").asText();
+                String exerciseType = node.has("type") ? node.get("type").asText() : "N/A"; // Include type if available
                 String muscleGroup = node.get("muscle").asText();
                 String equipmentRequired = node.get("equipment").asText();
-                String difficultyLevel = node.get("difficulty").asText();
-                String instructions = node.get("instructions").asText();
 
-                // Format and add each exercise to result area and generatedWorkouts list
-                String workout = String.format("Exercise: %s\nType: %s\nMuscle: %s\nEquipment: %s\nDifficulty: %s\nInstructions: %s\n\n",
-                        name, type, muscleGroup, equipmentRequired, difficultyLevel, instructions);
+                // Updated description to include Type information
+                String workout = String.format("Exercise: %s\nType: %s\nMuscle: %s\nEquipment: %s\n", name, exerciseType, muscleGroup, equipmentRequired);
 
-                resultArea.append(workout);
-                generatedWorkouts.add(workout);
+                JCheckBox checkBox = new JCheckBox("<html>" + workout.replace("\n", "<br>") + "</html>");
+                checkBox.addActionListener(e -> {
+                    if (checkBox.isSelected() && !selectedWorkoutCheckBoxes.contains(checkBox)) {
+                        selectedWorkoutCheckBoxes.add(checkBox);
+                    } else if (!checkBox.isSelected()) {
+                        selectedWorkoutCheckBoxes.remove(checkBox);
+                    }
+                });
+
+                resultPanel.add(checkBox);
+                workoutCheckBoxes.add(checkBox);
             }
+
+            resultPanel.revalidate();
+            resultPanel.repaint();
 
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Failed to fetch data from API.", "API Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+    // Save a custom workout with selected exercises
+    private void saveCustomWorkout() {
+        String workoutName = workoutNameField.getText().trim();
 
-    private void saveSelectedWorkouts() {
-        if (generatedWorkouts.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No workouts generated to save. Please generate a workout first.", "Save Error", JOptionPane.WARNING_MESSAGE);
+        if (workoutName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a name for your workout.", "Input Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        savedWorkouts.addAll(generatedWorkouts);
-        updateSavedWorkoutsArea();
-        JOptionPane.showMessageDialog(this, "Selected workouts saved successfully!", "Save Confirmation", JOptionPane.INFORMATION_MESSAGE);
+        List<Map<String, String>> selectedExercises = new ArrayList<>();
+        for (JCheckBox checkBox : selectedWorkoutCheckBoxes) {
+            Map<String, String> exerciseMap = new LinkedHashMap<>();
+
+            // Extract exercise name and type from the checkbox text
+            String[] lines = checkBox.getText().replace("<html>", "").replace("</html>", "").split("<br>");
+            String exerciseName = lines[0].replace("Exercise: ", "").trim();
+            String exerciseType = lines[1].replace("Type: ", "").trim();
+
+            exerciseMap.put("exercise", exerciseName);
+            exerciseMap.put("type", exerciseType);
+            selectedExercises.add(exerciseMap);
+        }
+
+        if (selectedExercises.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No exercises selected. Please select exercises to save.", "Save Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        savedWorkoutGroups.put(workoutName, selectedExercises);
+        updateSavedWorkoutList();
+        JOptionPane.showMessageDialog(this, "Workout saved successfully as " + workoutName + "!", "Save Confirmation", JOptionPane.INFORMATION_MESSAGE);
+
+        workoutNameField.setText("");
+        selectedWorkoutCheckBoxes.clear();
     }
 
-    private void updateSavedWorkoutsArea() {
-        savedWorkoutsArea.setText("");
-        for (String workout : savedWorkouts) {
-            savedWorkoutsArea.append(workout + "\n");
+
+    // Update the saved workouts list display
+    private void updateSavedWorkoutList() {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String workoutName : savedWorkoutGroups.keySet()) {
+            listModel.addElement(workoutName);
+        }
+        savedWorkoutList.setModel(listModel);
+    }
+
+    // Display exercises for a selected saved workout
+    private void displayWorkoutExercises() {
+        selectedWorkoutName = savedWorkoutList.getSelectedValue();
+        exerciseInputPanel.removeAll();
+        exerciseInputs = new ArrayList<>();
+
+        if (selectedWorkoutName != null) {
+            List<Map<String, String>> exercises = savedWorkoutGroups.get(selectedWorkoutName);
+
+            for (Map<String, String> exerciseMap : exercises) {
+                String exercise = exerciseMap.get("exercise");
+                String type = exerciseMap.get("type");
+                ExerciseInput input = new ExerciseInput(exercise, type);
+                exerciseInputs.add(input);
+                exerciseInputPanel.add(input.getPanel());
+            }
+
+            exerciseInputPanel.revalidate();
+            exerciseInputPanel.repaint();
         }
     }
 
+    // Log the selected workout details with timestamp
     private void logWorkoutDetails() {
-        if (savedWorkouts.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No saved workouts to log. Please save workouts first.", "Log Error", JOptionPane.WARNING_MESSAGE);
+        if (selectedWorkoutName == null) {
+            JOptionPane.showMessageDialog(this, "Please select a workout group to log details.", "Selection Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        StringBuilder logEntry = new StringBuilder();
-        for (String workout : savedWorkouts) {
-            logEntry.append(workout)
-                    .append("Sets: [  ]  Reps: [  ]  Weight: [  ]\n\n");
+        List<String> workoutDetails = new ArrayList<>();
+        for (ExerciseInput input : exerciseInputs) {
+            workoutDetails.add(input.getExerciseDetails());
         }
 
-        logArea.append(logEntry.toString());
-        JOptionPane.showMessageDialog(this, "Workout details logged successfully!", "Log Confirmation", JOptionPane.INFORMATION_MESSAGE);
+        String date = new SimpleDateFormat("MM/dd/yyyy").format(new Date());
+        String logEntryName = selectedWorkoutName + " (" + date + ")";
+
+        loggedWorkouts.put(logEntryName, workoutDetails);
+        updateLoggedWorkoutList();
+
+        JOptionPane.showMessageDialog(this, "Workout logged successfully!", "Log Confirmation", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // Update the list of logged workouts display
+    private void updateLoggedWorkoutList() {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String workoutName : loggedWorkouts.keySet()) {
+            listModel.addElement(workoutName);
+        }
+        loggedWorkoutList.setModel(listModel);
+    }
+
+    // Display detailed information for the selected logged workout
+    private void displayLoggedWorkoutDetails(String workoutName) {
+        if (workoutName != null && loggedWorkouts.containsKey(workoutName)) {
+            StringBuilder details = new StringBuilder("Workout: " + workoutName).append("\n------------------------------------\n");
+
+            for (String exerciseDetail : loggedWorkouts.get(workoutName)) {
+                details.append(exerciseDetail.replace("Type:", "").replace("Difficulty:", ""))
+                        .append("\n------------------------------------\n");
+            }
+            workoutDetailsArea.setText(details.toString());
+        } else {
+            workoutDetailsArea.setText("");
+        }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(CustomGymRoutineApp::new);
+    }
+
+    // Helper to create a JLabel with right alignment
+    private JLabel createLabel(String text) {
+        return new JLabel(text, JLabel.RIGHT);
+    }
+
+    // Helper to create a JButton with specified text
+    private JButton createButton(String text) {
+        return new JButton(text);
+    }
+}
+
+// Class to represent individual exercise input for logging fields based on type
+class ExerciseInput {
+    private String exercise;
+    private JTextField setsField, repsField, weightField, durationField;
+    private JLabel repsLabel, weightLabel, durationLabel;
+
+    public ExerciseInput(String exercise, String type) {
+        this.exercise = exercise;
+        setsField = new JTextField(5);
+
+        // Check if type is cardio or stretching, then set up fields accordingly
+        if (type.equals("cardio") || type.equals("stretching")) {
+            // Only sets and duration fields for cardio/stretching
+            durationField = new JTextField(5);
+            durationLabel = new JLabel("Duration (minutes):");
+        } else {
+            // Sets, reps, and weight fields for other types
+            repsField = new JTextField(5);
+            weightField = new JTextField(5);
+            repsLabel = new JLabel("Reps:");
+            weightLabel = new JLabel("Weight:");
+        }
+    }
+
+    // Create panel for input fields based on type
+    public JPanel getPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panel.add(new JLabel("<html>" + exercise.replace("\n", "<br>") + "</html>"));
+        panel.add(new JLabel("Sets:"));
+        panel.add(setsField);
+
+        // Add fields based on type
+        if (durationField != null) { // Cardio/stretching: add duration only
+            panel.add(durationLabel);
+            panel.add(durationField);
+        } else { // Other types: add reps and weight fields
+            panel.add(repsLabel);
+            panel.add(repsField);
+            panel.add(weightLabel);
+            panel.add(weightField);
+        }
+        return panel;
+    }
+
+    // Generate exercise details based on the type of fields
+    public String getExerciseDetails() {
+        String details = "Sets: " + setsField.getText();
+        if (durationField != null) {
+            details += "  Duration: " + durationField.getText();
+        } else {
+            details += "  Reps: " + repsField.getText() + "  Weight: " + weightField.getText();
+        }
+        return exercise + "\n" + details;
     }
 }
